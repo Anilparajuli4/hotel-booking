@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import User from "../model/user.model";
 import jwt from "jsonwebtoken";
 import { validationResult } from "express-validator";
@@ -22,22 +22,20 @@ export const registerUser = async (req: Request, res: Response) => {
     user = new User(req.body);
     await user.save();
 
-    const token = await jwt.sign(
-      { userId: user._id },
-      process.env.JWT as string,
-      {
-        expiresIn: "1d",
-      }
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT as string, {
+      expiresIn: "1d",
+    });
+    // console.log(token);
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "producton",
+      maxAge: 86400000,
+    });
 
-    return res
-      .status(200)
-      .cookie("auth_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "producton",
-        maxAge: 86400000,
-      })
-      .json("register successfully");
+    return res.status(200).json({
+      tokens: token,
+      message: "register successfully",
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -82,4 +80,19 @@ export const loginUser = async (req: Request, res: Response) => {
       message: "error in registerUser " + error,
     });
   }
+};
+
+export const validateToken = (req: Request, res: Response) => {
+  res.status(200).json({ userId: req.userId });
+};
+
+export const LogoutUser = (req: Request, res: Response) => {
+  return res
+    .cookie("auth_token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "producton",
+      maxAge: 0,
+    })
+    .status(200)
+    .json("successfully logout");
 };
