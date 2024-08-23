@@ -1,5 +1,6 @@
 import { TSignIn } from "./pages/Login";
 import { RegisterFormData } from "./pages/Register";
+import { HotelType } from "../../backend/src/model/hotel.model";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -57,6 +58,31 @@ export const LogOut = async () => {
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.message);
+  }
+  return data;
+};
+
+export const addMyHotel = async (hotelFormData: FormData) => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/hotel/create`, {
+    method: "POST",
+    credentials: "include",
+    body: hotelFormData,
+  });
+  console.log(response);
+
+  if (!response.ok) {
+    throw new Error("failed to add hotel");
+  }
+  return response.json();
+};
+
+export const getMyHotel = async (): Promise<HotelType[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/hotel/gethotel`, {
+    credentials: "include",
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error("failed to get hotel");
   }
   return data;
 };
